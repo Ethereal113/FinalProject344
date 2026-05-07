@@ -134,7 +134,3 @@ SET status = CASE
 END;
 END$$
 DELIMITER ;
-
-/*test query for presentation*/
-INSERT INTO transactions(propertyID, userID, transactionType, transactionDate, amount)
-VALUES ("6", "11", "sale", "2026-05-02 12:15:00", "500.00");
