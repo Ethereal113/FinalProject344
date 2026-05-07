@@ -94,3 +94,47 @@ CREATE VIEW propertylistingview AS
     FROM
         (properties
         JOIN users ON ((properties.agentID = users.userID)));
+
+/*Creating procedures and triggers*/
+CREATE TRIGGER AfterTransactionInsert
+AFTER INSERT 
+ON transactions FOR EACH ROW
+BEGIN
+    	UPDATE properties
+		SET properties.status = CASE
+		WHEN transactions.tranType = 'sale' THEN 'sold'
+		WHEN transactions.tranType = 'rental' THEN 'rented'
+END;
+END
+
+DELIMITER $$
+CREATE PROCEDURE AddOrUpdateUser(user_ID INT, username VARCHAR(50), info VARCHAR(200), pass_hash VARCHAR(255), user_type ENUM('agent', 'buyer', 'renter'))
+BEGIN
+IF user_ID IS NULL THEN 
+	INSERT INTO users 
+	VALUES(username, info, pass_hash, user_type);
+ELSE
+	UPDATE users
+    SET userName = username, contactInfo = info, passwordHash = pass_hash, userType = user_type 
+    WHERE userID = user_ID;
+    END IF;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE ProcessTransaction(propID INT, user_ID INT, tranType ENUM('sale', 'rental'), amt DECIMAL(12,2))
+BEGIN
+INSERT INTO transactions (propertyID, userID, transactionType, amount)
+VALUES (propID, user_ID, tranType, amt);
+
+UPDATE properties
+SET status = CASE
+	WHEN tranType = 'sale' THEN 'sold'
+	WHEN tranType = 'rental' THEN 'rented'
+END;
+END$$
+DELIMITER ;
+
+/*test query for presentation*/
+INSERT INTO transactions(propertyID, userID, transactionType, transactionDate, amount)
+VALUES ("6", "11", "sale", "2026-05-02 12:15:00", "500.00");
